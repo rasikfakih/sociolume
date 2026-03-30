@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # Local Supabase for development
+  supabase:
+    image: supabase/supabase:latest
+    container_name: sociolume-supabase
+    ports:
+      - '5432:5432'
+      - '54321:54321'
+      - '3000:3000'
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      ANON_KEY: your_anon_key
+      SERVICE_ROLE_KEY: your_service_role_key
+    volumes:
+      - supabase-data:/var/lib/postgresql/data
+      - ./docker/supabase/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Local API Gateway
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: sociolume-api
+    ports:
+      - '3001:3001'
+    environment:
+      - NODE_ENV=development
+      - SUPABASE_DB_URL=postgresql://postgres:postgres@supabase:5432/postgres
+    depends_on:
+      - supabase
+    volumes:
+      - ./apps/api:/app
+      - /app/node_modules
+
+  # Local AI Service
+  ai:
+    build:
+      context: .
+      dockerfile: services/ai/Dockerfile
+    container_name: sociolume-ai
+    ports:
+      - '8001:8001'
+    environment:
+      - AI_SERVICE_API_KEY=your_ai_service_api_key
+    volumes:
+      - ./services/ai:/app
+      - /app/.venv
+
+  # Local Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: sociolume-redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+
+volumes:
+  supabase-data:
+  redis-data:

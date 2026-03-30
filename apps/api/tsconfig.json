@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@sociolume/config": ["../../packages/config/src"],
+      "@sociolume/types": ["../../packages/types/src"],
+      "@sociolume/utils": ["../../packages/utils/src"],
+      "@sociolume/ui": ["../../packages/ui/src"],
+      "@sociolume/auth": ["../../packages/auth/src"],
+      "@sociolume/db": ["../../packages/db/src"],
+      "@sociolume/cms": ["../../packages/cms/src"],
+      "@sociolume/crm": ["../../packages/crm/src"],
+      "@sociolume/realtime": ["../../packages/realtime/src"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

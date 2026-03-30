@@ -1,0 +1,34 @@
+{
+  "name": "@sociolume/ui",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./button": "./src/components/button.tsx",
+    "/card": "./src/components/card.tsx",
+    "/input": "./src/components/input.tsx",
+    "/modal": "./src/components/modal.tsx",
+    "/avatar": "./src/components/avatar.tsx",
+    "/badge": "./src/components/badge.tsx",
+    "/tabs": "./src/components/tabs.tsx"
+  },
+  "scripts": {
+    "lint": "eslint src --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "typescript": "^5.3.0"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}

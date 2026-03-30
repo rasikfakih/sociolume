@@ -1,0 +1,133 @@
+import daisyui from 'daisyui';
+
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./src/**/*.{js,ts,jsx,tsx,mdx}', '../../packages/ui/src/**/*.{js,ts,jsx,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        // Analytics Dashboard color palette from UI UX Pro Max
+        brand: {
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',
+          600: '#2563eb',
+          700: '#1d4ed8',
+          800: '#1e40af',
+          900: '#1e3a8a',
+          950: '#172554',
+        },
+        accent: {
+          50: '#fffbeb',
+          100: '#fef3c7',
+          200: '#fde68a',
+          300: '#fcd34d',
+          400: '#fbbf24',
+          500: '#f59e0b',
+          600: '#d97706',
+          700: '#b45309',
+          800: '#92400e',
+          900: '#78350f',
+        },
+        success: {
+          50: '#f0fdf4',
+          100: '#dcfce7',
+          200: '#bbf7d0',
+          300: '#86efac',
+          400: '#4ade80',
+          500: '#22c55e',
+          600: '#16a34a',
+          700: '#15803d',
+          800: '#166534',
+          900: '#14532d',
+        },
+        surface: {
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#334155',
+          800: '#1e293b',
+          900: '#0f172a',
+        },
+      },
+      fontFamily: {
+        // Friendly SaaS typography from UI UX Pro Max
+        sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+        display: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+      },
+      borderRadius: {
+        // Bento box style rounded corners
+        'xl': '12px',
+        '2xl': '16px',
+        '3xl': '24px',
+      },
+      boxShadow: {
+        // Soft shadows for card elevation
+        'soft': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
+        'soft-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05)',
+        'soft-xl': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+      },
+    },
+  },
+  plugins: [daisyui],
+  daisyui: {
+    themes: [
+      {
+        sociolume: {
+          'primary': '#2563eb',
+          'primary-content': '#ffffff',
+          'secondary': '#3b82f6',
+          'secondary-content': '#ffffff',
+          'accent': '#f59e0b',
+          'accent-content': '#ffffff',
+          'neutral': '#1e293b',
+          'neutral-content': '#f8fafc',
+          'base-100': '#ffffff',
+          'base-200': '#f1f5f9',
+          'base-300': '#e2e8f0',
+          'base-content': '#0f172a',
+          'info': '#3b82f6',
+          'info-content': '#ffffff',
+          'success': '#22c55e',
+          'success-content': '#ffffff',
+          'warning': '#f59e0b',
+          'warning-content': '#ffffff',
+          'error': '#ef4444',
+          'error-content': '#ffffff',
+        },
+      },
+      {
+        'sociolume-dark': {
+          'primary': '#3b82f6',
+          'primary-content': '#ffffff',
+          'secondary': '#60a5fa',
+          'secondary-content': '#0f172a',
+          'accent': '#fbbf24',
+          'accent-content': '#0f172a',
+          'neutral': '#1e293b',
+          'neutral-content': '#f8fafc',
+          'base-100': '#0f172a',
+          'base-200': '#1e293b',
+          'base-300': '#334155',
+          'base-content': '#f8fafc',
+          'info': '#3b82f6',
+          'info-content': '#ffffff',
+          'success': '#22c55e',
+          'success-content': '#ffffff',
+          'warning': '#f59e0b',
+          'warning-content': '#0f172a',
+          'error': '#ef4444',
+          'error-content': '#ffffff',
+        },
+      },
+    ],
+    darkTheme: 'sociolume-dark',
+  },
+};

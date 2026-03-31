@@ -19,6 +19,9 @@ export type ActivityAction = 'created' | 'updated' | 'deleted' | 'login' | 'logo
 export type NotificationType = 'info' | 'warning' | 'error' | 'success';
 export type PlanInterval = 'month' | 'year';
 export type LeadSource = 'hubspot' | 'manual' | 'import';
+export type Platform = 'reddit' | 'news';
+export type MentionStatus = 'new' | 'assigned' | 'replied' | 'closed';
+export type Sentiment = 'positive' | 'neutral' | 'negative';
 
 // =============================================================================
 // Table Row Types
@@ -160,6 +163,46 @@ export interface CrmLead {
   updated_at: string;
 }
 
+// Brands table - brands being tracked
+export interface Brand {
+  id: string;
+  agency_id: string;
+  name: string;
+  slug: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Brand keywords table - keywords to track for a brand
+export interface BrandKeyword {
+  id: string;
+  brand_id: string;
+  phrase: string;
+  platform: Platform | 'all';
+  is_active: boolean;
+  created_at: string;
+}
+
+// Mentions table - social media mentions
+export interface Mention {
+  id: string;
+  brand_id: string;
+  agency_id: string;
+  platform: Platform;
+  external_id: string;
+  url: string;
+  title: string | null;
+  content: string | null;
+  author_handle: string | null;
+  sentiment: Sentiment;
+  status: MentionStatus;
+  assigned_to: string | null;
+  platform_created_at: string | null;
+  detected_at: string;
+  created_at: string;
+}
+
 // =============================================================================
 // Database Interface (snake_case to match PostgreSQL)
 // =============================================================================
@@ -256,6 +299,31 @@ export interface Database {
         };
         Update: Partial<Omit<CrmLead, 'id' | 'created_at' | 'updated_at'>>;
       };
+      brands: {
+        Row: Brand;
+        Insert: Omit<Brand, 'id' | 'created_at' | 'updated_at'> & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<Brand, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      brand_keywords: {
+        Row: BrandKeyword;
+        Insert: Omit<BrandKeyword, 'id' | 'created_at'> & {
+          id?: string;
+          created_at?: string;
+        };
+        Update: Partial<Omit<BrandKeyword, 'id' | 'created_at'>>;
+      };
+      mentions: {
+        Row: Mention;
+        Insert: Omit<Mention, 'id' | 'created_at'> & {
+          id?: string;
+          created_at?: string;
+        };
+        Update: Partial<Omit<Mention, 'id' | 'created_at'>>;
+      };
     };
     Views: {
       [_ in never]: never;
@@ -272,6 +340,9 @@ export interface Database {
       notification_type: NotificationType;
       plan_interval: PlanInterval;
       lead_source: LeadSource;
+      platform: Platform;
+      mention_status: MentionStatus;
+      sentiment: Sentiment;
     };
   };
 }
@@ -291,6 +362,9 @@ export const tables = {
   activities: 'activities',
   notifications: 'notifications',
   crmLeads: 'crm_leads',
+  brands: 'brands',
+  brandKeywords: 'brand_keywords',
+  mentions: 'mentions',
 } as const;
 
 // =============================================================================

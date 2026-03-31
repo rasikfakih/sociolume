@@ -3,9 +3,11 @@
   "compilerOptions": {
     "composite": true,
     "outDir": "./dist",
-    "rootDir": "./src",
-    "jsx": "react-jsx"
+    "rootDir": "../../",
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM"],
+    "types": ["node"]
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../utils/src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

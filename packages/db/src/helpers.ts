@@ -1,6 +1,6 @@
 import { getSupabaseClient, getSupabaseAdmin } from './client';
 import { tables } from './types';
-import type { Json, Plan, Agency, Profile, User, AgencyMember, Subscription, UsageRecord, Activity, Notification, CrmLead, MemberRole, SubscriptionStatus, ActivityType, LeadStatus, LeadSource, NotificationType } from './types';
+import type { Json, Plan, Agency, Profile, User, AgencyMember, Subscription, UsageRecord, Activity, Notification, CrmLead, MemberRole, SubscriptionStatus, ActivityType, LeadStatus, LeadSource, NotificationType, Brand, BrandKeyword, Mention, Platform, MentionStatus, Sentiment } from './types';
 
 // Use any type for Supabase client to bypass type inference issues
 type DbClient = any;
@@ -1418,4 +1418,307 @@ export async function createLeadLegacy(
 
   if (error) throw error;
   return data as CrmLead;
+}
+
+// =============================================================================
+// Brands Helpers
+// =============================================================================
+
+/**
+ * Get all active brands for an agency with keyword count
+ */
+export async function getBrandsByAgency(agencyId: string, client?: DbClient) {
+  const supabase = client || getSupabaseClient();
+  const { data, error } = await supabase
+    .from(tables.brands)
+    .select('*, brand_keywords!inner(id)')
+    .eq('agency_id', agencyId)
+    .eq('is_active', true)
+    .order('name', { ascending: true });
+
+  if (error) throw error;
+
+  // Add keyword_count to each brand
+  return (data || []).map((brand: any) => ({
+    ...brand,
+    keyword_count: brand.brand_keywords?.length || 0,
+  })) as Array<Brand & { keyword_count: number }>;
+}
+
+/**
+ * Get single brand by ID
+ */
+export async function getBrandById(id: string, client?: DbClient) {
+  const supabase = client || getSupabaseClient();
+  const { data, error } = await supabase
+    .from(tables.brands)
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) throw error;
+  return data as Brand | null;
+}
+
+/**
+ * Create brand with auto-generated slug and keywords
+ */
+export async function createBrand(
+  data: {
+    agency_id: string;
+    name: string;
+    keywords: string[];
+  },
+  client?: DbClient
+) {
+  const supabase = client || getSupabaseAdmin();
+
+  // Generate slug: lowercase, replace spaces with hyphens, remove special chars, append 4-char random suffix
+  const baseSlug = data.name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-');
+  const randomSuffix = Math.random().toString(36).substring(2, 6);
+  const slug = `${baseSlug}-${randomSuffix}`;
+
+  // Create brand
+  const { data: brand, error: brandError } = await supabase
+    .from(tables.brands)
+    .insert({
+      agency_id: data.agency_id,
+      name: data.name,
+      slug,
+      is_active: true,
+    })
+    .select()
+    .single();
+
+  if (brandError) throw brandError;
+
+  // Create brand keywords
+  if (data.keywords && data.keywords.length > 0) {
+    const keywordRecords = data.keywords.map((phrase) => ({
+      brand_id: brand.id,
+      phrase,
+      platform: 'all',
+      is_active: true,
+    }));
+
+    const { error: keywordError } = await supabase
+      .from(tables.brandKeywords)
+      .insert(keywordRecords);
+
+    if (keywordError) throw keywordError;
+  }
+
+  return brand as Brand;
+}
+
+/**
+ * Soft delete brand - sets is_active = false
+ */
+export async function deactivateBrand(id: string, client?: DbClient) {
+  const supabase = client || getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from(tables.brands)
+    .update({ is_active: false, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Brand;
+}
+
+// =============================================================================
+// Brand Keywords Helpers
+// =============================================================================
+
+/**
+ * Add keyword to brand
+ */
+export async function addBrandKeyword(
+  data: {
+    brand_id: string;
+    phrase: string;
+    platform?: string;
+  },
+  client?: DbClient
+) {
+  const supabase = client || getSupabaseAdmin();
+  const { data: keyword, error } = await supabase
+    .from(tables.brandKeywords)
+    .insert({
+      brand_id: data.brand_id,
+      phrase: data.phrase,
+      platform: data.platform || 'all',
+      is_active: true,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return keyword as BrandKeyword;
+}
+
+/**
+ * Soft delete keyword - sets is_active = false
+ */
+export async function deactivateBrandKeyword(id: string, client?: DbClient) {
+  const supabase = client || getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from(tables.brandKeywords)
+    .update({ is_active: false })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as BrandKeyword;
+}
+
+// =============================================================================
+// Mentions Helpers
+// =============================================================================
+
+/**
+ * Get paginated mentions for a brand
+ */
+export async function getMentionsByBrand(
+  brandId: string,
+  options: {
+    status?: MentionStatus;
+    platform?: Platform;
+    page?: number;
+    pageSize?: number;
+  } = {},
+  client?: DbClient
+) {
+  const supabase = client || getSupabaseClient();
+  const page = options.page || 1;
+  const pageSize = options.pageSize || 20;
+  const offset = (page - 1) * pageSize;
+
+  let query = supabase
+    .from(tables.mentions)
+    .select('*', { count: 'exact' })
+    .eq('brand_id', brandId);
+
+  if (options.status) {
+    query = query.eq('status', options.status);
+  }
+
+  if (options.platform) {
+    query = query.eq('platform', options.platform);
+  }
+
+  const { data, error, count } = await query
+    .order('detected_at', { ascending: false })
+    .range(offset, offset + pageSize - 1);
+
+  if (error) throw error;
+
+  const totalCount = count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  return {
+    data: (data as Mention[]) || [],
+    count: totalCount,
+    page,
+    totalPages,
+  };
+}
+
+/**
+ * Update mention status or assignment
+ */
+export async function updateMention(
+  id: string,
+  updates: {
+    status?: MentionStatus;
+    assigned_to?: string | null;
+  },
+  client?: DbClient
+) {
+  const supabase = client || getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from(tables.mentions)
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Mention;
+}
+
+/**
+ * Batch insert new mentions (deduplication handled by DB unique constraint)
+ */
+export async function insertMentions(
+  mentions: Array<{
+    brand_id: string;
+    agency_id: string;
+    platform: Platform;
+    external_id: string;
+    url: string;
+    title?: string | null;
+    content?: string | null;
+    author_handle?: string | null;
+    sentiment: Sentiment;
+    platform_created_at?: string | null;
+  }>,
+  client?: DbClient
+) {
+  const supabase = client || getSupabaseAdmin();
+
+  const { data, error } = await supabase
+    .from(tables.mentions)
+    .upsert(
+      mentions.map((m) => ({
+        ...m,
+        status: 'new' as MentionStatus,
+        detected_at: new Date().toISOString(),
+      })),
+      {
+        onConflict: 'brand_id,platform,external_id',
+        ignoreDuplicates: true,
+      }
+    )
+    .select();
+
+  if (error) throw error;
+  return data?.length || mentions.length;
+}
+
+/**
+ * Get all active keywords grouped by brand for monitor cycle
+ */
+export async function getAllActiveKeywordsWithBrands(client?: DbClient) {
+  const supabase = client || getSupabaseClient();
+  const { data, error } = await supabase
+    .from(tables.brandKeywords)
+    .select('*, brand:brands(id, name, agency_id)')
+    .eq('is_active', true);
+
+  if (error) throw error;
+
+  return (data || []).map((row: any) => ({
+    brand_id: row.brand_id,
+    brand_name: row.brand?.name,
+    agency_id: row.brand?.agency_id,
+    keyword_id: row.id,
+    phrase: row.phrase,
+    platform: row.platform,
+  })) as Array<{
+    brand_id: string;
+    brand_name: string;
+    agency_id: string;
+    keyword_id: string;
+    phrase: string;
+    platform: string;
+  }>;
 }

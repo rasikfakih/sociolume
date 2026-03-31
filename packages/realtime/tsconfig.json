@@ -3,8 +3,8 @@
   "compilerOptions": {
     "composite": true,
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "../../"
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../db/src/**/*", "../config/src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

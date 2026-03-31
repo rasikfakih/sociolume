@@ -1,4 +1,4 @@
-import { getSupabaseClient, TypedSupabaseClient } from '@sociolume/db';
+import { getSupabaseClient } from '@sociolume/db';
 import {
   RealtimeChannel,
   RealtimePresenceState,
@@ -9,10 +9,10 @@ import {
 export type { RealtimeChannel, RealtimePresenceState, RealtimePostgresChangesPayload };
 
 // Subscribe to database changes
-export function subscribeToTable<T>(table: string, callback: (payload: T) => void) {
+export function subscribeToTable<T extends { [key: string]: any }>(table: string, callback: (payload: T) => void) {
   const supabase = getSupabaseClient();
   return supabase.channel(`public:${table}`).on(
-    'postgres_changes',
+    'postgres_changes' as const,
     {
       event: '*',
       schema: 'public',
@@ -38,7 +38,7 @@ export function subscribeToNotifications(
       table: 'notifications',
       filter: `user_id=eq.${userId}`,
     },
-    (payload: RealtimePostgresChangesPayload<unknown>) => {
+    (payload: RealtimePostgresChangesPayload<Record<string, any>>) => {
       callback(payload.new);
     }
   );
@@ -55,7 +55,7 @@ export function subscribeToActivities(userId: string, callback: (activity: unkno
       table: 'activities',
       filter: `user_id=eq.${userId}`,
     },
-    (payload: RealtimePostgresChangesPayload<unknown>) => {
+    (payload: RealtimePostgresChangesPayload<Record<string, any>>) => {
       callback(payload.new);
     }
   );
@@ -72,7 +72,7 @@ export function subscribeToUsage(userId: string, callback: (usage: unknown) => v
       table: 'usage',
       filter: `user_id=eq.${userId}`,
     },
-    (payload: RealtimePostgresChangesPayload<unknown>) => {
+    (payload: RealtimePostgresChangesPayload<Record<string, any>>) => {
       callback(payload.new);
     }
   );

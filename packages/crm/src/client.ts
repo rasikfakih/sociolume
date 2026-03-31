@@ -7,18 +7,16 @@ const HS_BASE_URL = 'https://api.hubapi.com';
 // HubSpot CRM client
 export class HubSpotClient {
   private apiKey: string;
-  private portalId: string;
   private baseUrl: string;
 
-  constructor(apiKey = HS_API_KEY, portalId = HS_PORTAL_ID) {
+  constructor(apiKey = HS_API_KEY, _portalId = HS_PORTAL_ID) {
     this.apiKey = apiKey;
-    this.portalId = portalId;
     this.baseUrl = HS_BASE_URL;
   }
 
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${this.apiKey}`,
     };
@@ -35,7 +33,7 @@ export class HubSpotClient {
       throw new Error(`HubSpot API error: ${response.status} ${response.statusText}`);
     }
 
-    return response.json();
+    return response.json() as Promise<T>;
   }
 
   // Contact operations
@@ -74,10 +72,10 @@ export class HubSpotClient {
     }>
   ): Promise<HubSpotContact> {
     const updateProperties: Record<string, string> = {};
-    if (properties.firstName) updateProperties.firstname = properties.firstName;
-    if (properties.lastName) updateProperties.lastname = properties.lastName;
-    if (properties.phone) updateProperties.phone = properties.phone;
-    if (properties.company) updateProperties.company = properties.company;
+    if (properties['firstName']) updateProperties['firstname'] = properties['firstName'];
+    if (properties['lastName']) updateProperties['lastname'] = properties['lastName'];
+    if (properties['phone']) updateProperties['phone'] = properties['phone'];
+    if (properties['company']) updateProperties['company'] = properties['company'];
 
     return this.request<HubSpotContact>(`/crm/v3/objects/contacts/${contactId}`, {
       method: 'PATCH',
@@ -150,9 +148,9 @@ export class HubSpotClient {
     }>
   ): Promise<HubSpotDeal> {
     const updateProperties: Record<string, string | number> = {};
-    if (properties.name) updateProperties.dealname = properties.name;
-    if (properties.stage) updateProperties.dealstage = properties.stage;
-    if (properties.amount) updateProperties.amount = properties.amount;
+    if (properties['name']) updateProperties['dealname'] = properties['name'];
+    if (properties['stage']) updateProperties['dealstage'] = properties['stage'];
+    if (properties['amount']) updateProperties['amount'] = properties['amount'];
 
     return this.request<HubSpotDeal>(`/crm/v3/objects/deals/${dealId}`, {
       method: 'PATCH',
@@ -190,7 +188,7 @@ export class HubSpotClient {
   }
 
   // Webhook verification
-  verifyWebhook(payload: string, signature: string, secret: string): boolean {
+  verifyWebhook(_payload: string, _signature: string, _secret: string): boolean {
     // HubSpot webhook signature verification would go here
     // For now, return true for development
     return true;

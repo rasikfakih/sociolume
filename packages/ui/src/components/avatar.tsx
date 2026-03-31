@@ -19,13 +19,6 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
       xl: 'w-16 h-16',
     };
 
-    const statusClasses = {
-      online: 'online',
-      offline: 'offline',
-      busy: 'busy',
-      away: 'away',
-    };
-
     const indicatorSizeClasses = {
       xs: 'w-2 h-2',
       sm: 'w-2.5 h-2.5',

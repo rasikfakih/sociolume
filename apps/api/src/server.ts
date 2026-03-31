@@ -7,10 +7,12 @@ import { healthRoutes } from './routes/health.js';
 import { versionRoutes } from './routes/version.js';
 import { authRoutes } from './routes/auth.js';
 import { webhookRoutes } from './routes/webhooks.js';
+import { brandRoutes } from './routes/brands.js';
+import { startCronJobs } from './cron.js';
 import { logger } from './utils/logger.js';
 
 const fastify = Fastify({
-  logger: logger,
+  logger: logger as any,
 });
 
 async function buildApp() {
@@ -34,6 +36,7 @@ async function buildApp() {
   await fastify.register(versionRoutes, { prefix: '/api' });
   await fastify.register(authRoutes, { prefix: '/api/auth' });
   await fastify.register(webhookRoutes, { prefix: '/api/webhooks' });
+  await fastify.register(brandRoutes, { prefix: '/api' });
 
   // Root route
   fastify.get('/', async () => {
@@ -47,6 +50,7 @@ async function start() {
   try {
     const app = await buildApp();
     await app.listen({ port: apiConfig.port, host: apiConfig.host });
+    startCronJobs();
     logger.info(`Server running on http://${apiConfig.host}:${apiConfig.port}`);
   } catch (err) {
     logger.error(err);

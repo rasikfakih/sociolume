@@ -10,7 +10,7 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "../../",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
@@ -27,6 +27,6 @@
       "@sociolume/realtime": ["../../packages/realtime/src"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../packages/**/*"],
   "exclude": ["node_modules", "dist"]
 }

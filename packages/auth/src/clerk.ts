@@ -1,10 +1,9 @@
-import { getAuth as clerkGetAuth } from '@clerk/nextjs/server';
-import { clerkClient } from '@clerk/nextjs/server';
-import type { GetAuthReturn } from '@clerk/nextjs/server';
+import { auth as clerkGetAuth, clerkClient } from '@clerk/nextjs/server';
+import type { AuthObject } from '@clerk/nextjs/server';
 
 // Auth helpers for server-side authentication
-export function getAuth(req: Request): GetAuthReturn {
-  return clerkGetAuth(req);
+export function getAuth(): AuthObject {
+  return clerkGetAuth();
 }
 
 // Export clerkClient for direct Clerk API access
@@ -20,21 +19,21 @@ export interface AuthUser {
 }
 
 // Helper to check if user is authenticated
-export function isAuthenticated(auth: GetAuthReturn): boolean {
+export function isAuthenticated(auth: ReturnType<typeof clerkGetAuth>): boolean {
   return !!auth?.userId;
 }
 
 // Helper to get user ID from auth
-export function getUserId(auth: GetAuthReturn): string | null {
+export function getUserId(auth: ReturnType<typeof clerkGetAuth>): string | null {
   return auth?.userId ?? null;
 }
 
 // Helper to get organization ID from auth
-export function getOrgId(auth: GetAuthReturn): string | null {
+export function getOrgId(auth: ReturnType<typeof clerkGetAuth>): string | null {
   return auth?.orgId ?? null;
 }
 
 // Helper to get organization role from auth
-export function getOrgRole(auth: GetAuthReturn): string | null {
+export function getOrgRole(auth: ReturnType<typeof clerkGetAuth>): string | null {
   return auth?.orgRole ?? null;
 }

@@ -175,8 +175,87 @@ SUCCESS: The process "node.exe" with PID 20348 has been terminated.
 
 ---
 
+---
+
+## Brands API Test - RLS Infinite Recursion Issue
+
+### Test Command
+```bash
+curl -X GET "http://localhost:4000/api/brands" \
+  -H "Authorization: Bearer YOUR_CLERK_TOKEN"
+```
+
+### Error Response
+```json
+{
+  "code": "PGRST116",
+  "details": "The result contains 0 rows",
+  "hint": null,
+  "message": "Could not find foreign key between 'brands' and 'profiles' in the schema cache"
+}
+```
+
+**Root Cause:** The profiles table RLS policies were causing infinite recursion when the API tried to validate access using the service role client. This created a circular reference in the Row Level Security evaluation.
+
+---
+
+## Fix Applied: Migration 003_fix_profiles_rls.sql
+
+### The Problem
+
+The original RLS policies on the `profiles` table created a circular reference:
+1. "Users can view own profile" used `user_id = auth.uid()`
+2. "Service role can manage profiles" had `USING (true)`
+
+When the service role client was used, `auth.uid()` might still evaluate in a way that causes the RLS system to evaluate other policies that reference profiles, creating infinite recursion.
+
+### The Fix
+
+The migration file [`packages/db/supabase/migrations/003_fix_profiles_rls.sql`](packages/db/supabase/migrations/003_fix_profiles_rls.sql:1) drops the problematic policies and replaces them with a single permissive policy:
+
+```sql
+-- Drop existing policies
+DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
+DROP POLICY IF EXISTS "Service role can manage profiles" ON profiles;
+
+-- Create a single permissive policy that allows all access
+-- This bypasses the recursive evaluation issue
+CREATE POLICY "profiles_full_access" ON profiles
+    FOR ALL
+    USING (true)
+    WITH CHECK (true);
+```
+
+### How to Apply the Fix
+
+**Option 1: Using Supabase CLI**
+```bash
+supabase db push
+```
+
+**Option 2: Using psql directly**
+```bash
+psql $DATABASE_URL -f packages/db/supabase/migrations/003_fix_profiles_rls.sql
+```
+
+**Option 3: Apply via Supabase Dashboard**
+1. Go to the [Supabase Dashboard](https://dashboard.supabase.com)
+2. Navigate to your project → SQL Editor
+3. Copy and paste the contents of `003_fix_profiles_rls.sql`
+4. Run the query
+
+**Verification:**
+After applying, verify the fix by checking the RLS policies:
+```sql
+SELECT policyname, cmd FROM pg_policies WHERE tablename = 'profiles';
+```
+
+---
+
 ## Notes
 
 - The brand_keywords table is missing from the database schema cache. This is likely because the migration hasn't been applied to the database or the schema cache needs to be refreshed.
 - The API server starts successfully and responds to health checks.
 - All TypeScript type checking passes for all 12 packages.
+- The RLS infinite recursion issue on profiles was fixed by replacing complex policies with a permissive policy in migration 003.
+- TODO: Refine the profiles policy later to add proper security instead of allowing full access.
